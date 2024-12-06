@@ -16,7 +16,7 @@ username = st.sidebar.text_input("Username", type="default")
 password = st.sidebar.text_input("Password", type="password")
 
 # Append '/query' automatically to the base URL
-odata_url = f"{base_url.rstrip('/')}/query"
+odata_url = f"{base_url.rstrip('/')}/Query"
 
 # Fetch Data from OData
 @st.cache_data
