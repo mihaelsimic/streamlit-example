@@ -1,14 +1,13 @@
 import streamlit as st
-import pandas as pd
 import requests
 from requests.auth import HTTPBasicAuth
 
 # App Title
-st.title("OData Integration Example")
+st.title("OData Debugging App")
 
 # Sidebar for credentials
 st.sidebar.header("OData Connection Details")
-odata_url = st.sidebar.text_input("OData Endpoint URL", "https://example.com/odata/EntitySet")
+odata_url = st.sidebar.text_input("OData Endpoint URL", "https://sandbox.eu.adverity.com/api/internal/platform/v1/odata/")
 username = st.sidebar.text_input("Username", type="default")
 password = st.sidebar.text_input("Password", type="password")
 
@@ -19,47 +18,27 @@ def fetch_odata_data(url, user, pwd):
         # Make the GET request to the OData endpoint
         response = requests.get(url, auth=HTTPBasicAuth(user, pwd))
         response.raise_for_status()  # Raise HTTPError for bad responses
-        
-        # Log the raw response for debugging
-        st.write("Raw Response:", response.json())
-
-        # Parse JSON response into a Pandas DataFrame
-        data = response.json()
-
-        # Adjust data extraction based on API response structure
-        if "value" in data:
-            df = pd.json_normalize(data["value"])
-        else:
-            st.error("Unexpected response format. Please check the API response.")
-            return pd.DataFrame()
-
-        # Select required columns: "Account Name" and "Reactions"
-        if "AccountName" in df.columns and "Reactions" in df.columns:
-            df = df[["AccountName", "Reactions"]]
-        else:
-            st.error("Required fields 'AccountName' and 'Reactions' not found.")
-            return pd.DataFrame()
-
-        # Ensure "Reactions" is numeric
-        df["Reactions"] = pd.to_numeric(df["Reactions"], errors="coerce")
-        df = df.dropna()  # Drop rows with missing or invalid values
-        return df
+        # Return raw JSON response
+        return response.json()
     except Exception as e:
         st.error(f"Error fetching data: {e}")
-        return pd.DataFrame()  # Return empty DataFrame in case of error
+        return {}
 
-# Fetch and Display Data
+# Fetch and Display Raw Data
 if st.sidebar.button("Fetch Data"):
     if odata_url and username and password:
         st.info("Fetching data...")
         data = fetch_odata_data(odata_url, username, password)
-        if not data.empty:
+        if data:
             st.success("Data fetched successfully!")
-            st.dataframe(data)  # Display data in a table
+            st.json(data)  # Display raw JSON response for debugging
 
-            # Plot the bar chart
-            st.header("Reactions per Account")
-            st.bar_chart(data.set_index("AccountName")["Reactions"])
+            # Check if "value" key exists
+            if "value" in data:
+                st.write("Value Contents:")
+                st.write(data["value"])  # Display the contents of "value"
+            else:
+                st.warning("No 'value' key found in the response.")
         else:
             st.warning("No data available.")
     else:
