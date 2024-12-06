@@ -4,11 +4,11 @@ import requests
 from requests.auth import HTTPBasicAuth
 
 # App Title
-st.title("OData Integration Example")
+st.title("OData Account Reactions Viewer")
 
 # Sidebar for credentials
 st.sidebar.header("OData Connection Details")
-odata_url = st.sidebar.text_input("OData Endpoint URL", "https://sandbox.eu.adverity.com/api/")
+odata_url = st.sidebar.text_input("OData Endpoint URL", "https://example.com/odata/EntitySet")
 username = st.sidebar.text_input("Username", type="default")
 password = st.sidebar.text_input("Password", type="password")
 
@@ -22,6 +22,17 @@ def fetch_odata_data(url, user, pwd):
         # Parse JSON response into a Pandas DataFrame
         data = response.json()
         df = pd.json_normalize(data['value'])  # OData typically uses a "value" key for the main dataset
+
+        # Select only the required columns: "Account Name" and "Reactions"
+        if "Account Name" in df.columns and "Reactions" in df.columns:
+            df = df[["Account Name", "Reactions"]]
+        else:
+            st.error("The required fields 'Account Name' and 'Reactions' are not found in the dataset.")
+            return pd.DataFrame()
+
+        # Ensure "Reactions" is numeric
+        df["Reactions"] = pd.to_numeric(df["Reactions"], errors="coerce")
+        df = df.dropna()  # Drop rows with missing values
         return df
     except Exception as e:
         st.error(f"Error fetching data: {e}")
@@ -35,16 +46,11 @@ if st.sidebar.button("Fetch Data"):
         if not data.empty:
             st.success("Data fetched successfully!")
             st.dataframe(data)  # Display data in a table
-            # Allow user to choose a chart to plot
-            if st.checkbox("Show Chart"):
-                chart_type = st.selectbox("Select Chart Type", ["Bar Chart", "Line Chart"])
-                column_to_plot = st.selectbox("Select Column to Plot", data.columns)
-                if chart_type == "Bar Chart":
-                    st.bar_chart(data[column_to_plot])
-                elif chart_type == "Line Chart":
-                    st.line_chart(data[column_to_plot])
+
+            # Plot the bar chart
+            st.header("Reactions per Account")
+            st.bar_chart(data.set_index("Account Name")["Reactions"])
         else:
             st.warning("No data available.")
     else:
         st.warning("Please provide OData URL, username, and password.")
-
