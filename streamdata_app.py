@@ -4,7 +4,7 @@ import requests
 from requests.auth import HTTPBasicAuth
 
 # App Title
-st.title("OData Account Reactions Viewer")
+st.title("OData Integration Example")
 
 # Sidebar for credentials
 st.sidebar.header("OData Connection Details")
@@ -19,20 +19,30 @@ def fetch_odata_data(url, user, pwd):
         # Make the GET request to the OData endpoint
         response = requests.get(url, auth=HTTPBasicAuth(user, pwd))
         response.raise_for_status()  # Raise HTTPError for bad responses
+        
+        # Log the raw response for debugging
+        st.write("Raw Response:", response.json())
+
         # Parse JSON response into a Pandas DataFrame
         data = response.json()
-        df = pd.json_normalize(data['value'])  # OData typically uses a "value" key for the main dataset
 
-        # Select only the required columns: "Account Name" and "Reactions"
-        if "Account Name" in df.columns and "Reactions" in df.columns:
-            df = df[["Account Name", "Reactions"]]
+        # Adjust data extraction based on API response structure
+        if "value" in data:
+            df = pd.json_normalize(data["value"])
         else:
-            st.error("The required fields 'Account Name' and 'Reactions' are not found in the dataset.")
+            st.error("Unexpected response format. Please check the API response.")
+            return pd.DataFrame()
+
+        # Select required columns: "Account Name" and "Reactions"
+        if "AccountName" in df.columns and "Reactions" in df.columns:
+            df = df[["AccountName", "Reactions"]]
+        else:
+            st.error("Required fields 'AccountName' and 'Reactions' not found.")
             return pd.DataFrame()
 
         # Ensure "Reactions" is numeric
         df["Reactions"] = pd.to_numeric(df["Reactions"], errors="coerce")
-        df = df.dropna()  # Drop rows with missing values
+        df = df.dropna()  # Drop rows with missing or invalid values
         return df
     except Exception as e:
         st.error(f"Error fetching data: {e}")
@@ -49,7 +59,7 @@ if st.sidebar.button("Fetch Data"):
 
             # Plot the bar chart
             st.header("Reactions per Account")
-            st.bar_chart(data.set_index("Account Name")["Reactions"])
+            st.bar_chart(data.set_index("AccountName")["Reactions"])
         else:
             st.warning("No data available.")
     else:
