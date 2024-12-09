@@ -58,24 +58,28 @@ if st.sidebar.button("Fetch Data"):
             y_axis_default_index = 1 if len(available_columns) > 1 else 0  # Default to the 2nd column if available
             y_axis = st.selectbox("Select the Y-axis", available_columns, index=y_axis_default_index)
 
-            # Bar Chart
-            st.subheader("Bar Chart")
-            bar_chart_data = data[[x_axis, y_axis]].dropna()
-            st.bar_chart(bar_chart_data.set_index(x_axis)[y_axis])
+            # Ensure Y-axis column is numeric for valid visualizations
+            if pd.api.types.is_numeric_dtype(data[y_axis]):
+                # Bar Chart
+                st.subheader("Bar Chart")
+                bar_chart_data = data[[x_axis, y_axis]].dropna()
+                st.bar_chart(bar_chart_data.set_index(x_axis)[y_axis])
 
-            # Line Chart
-            st.subheader("Line Chart")
-            line_chart_data = data[[x_axis, y_axis]].dropna()
-            st.line_chart(line_chart_data.set_index(x_axis)[y_axis])
+                # Line Chart
+                st.subheader("Line Chart")
+                line_chart_data = data[[x_axis, y_axis]].dropna()
+                st.line_chart(line_chart_data.set_index(x_axis)[y_axis])
 
-            # Scatter Plot
-            st.subheader("Scatter Plot")
-            scatter = alt.Chart(data.dropna()).mark_circle(size=60).encode(
-                x=alt.X(x_axis, title=x_axis),
-                y=alt.Y(y_axis, title=y_axis),
-                tooltip=available_columns
-            ).interactive()
-            st.altair_chart(scatter, use_container_width=True)
+                # Scatter Plot
+                st.subheader("Scatter Plot")
+                scatter = alt.Chart(data.dropna()).mark_circle(size=60).encode(
+                    x=alt.X(x_axis, title=x_axis),
+                    y=alt.Y(y_axis, title=y_axis),
+                    tooltip=available_columns
+                ).interactive()
+                st.altair_chart(scatter, use_container_width=True)
+            else:
+                st.warning(f"The selected Y-axis column '{y_axis}' is not numeric. Please select a numeric column.")
         else:
             st.warning("No data available.")
     else:
