@@ -2,6 +2,7 @@ import streamlit as st
 import pandas as pd
 import requests
 from requests.auth import HTTPBasicAuth
+import altair as alt
 
 # App Title
 st.title("Dynamic OData Data Viewer and Visualization")
@@ -52,25 +53,28 @@ if st.sidebar.button("Fetch Data"):
             st.header("Visualizations")
             available_columns = data.columns.tolist()
 
-            # Allow users to select columns for the visualization
-            x_axis = st.selectbox("Select the X-axis", available_columns)
-            y_axis = st.selectbox("Select the Y-axis", available_columns)
+            # Dropdowns for selecting fields
+            x_axis = st.selectbox("Select the X-axis", available_columns, key="x_axis")
+            y_axis = st.selectbox("Select the Y-axis", available_columns, key="y_axis")
 
             # Allow users to select the chart type
-            chart_type = st.selectbox("Select the Chart Type", ["Bar Chart", "Line Chart", "Scatter Plot"])
+            chart_type = st.selectbox(
+                "Select the Chart Type", ["Bar Chart", "Line Chart", "Scatter Plot"], key="chart_type"
+            )
 
+            # Button to show the chart
             if st.button("Show Chart"):
                 # Render the selected chart type
                 if chart_type == "Bar Chart":
-                    st.bar_chart(data.set_index(x_axis)[y_axis])
+                    chart_data = data[[x_axis, y_axis]].dropna()
+                    st.bar_chart(chart_data.set_index(x_axis)[y_axis])
                 elif chart_type == "Line Chart":
-                    st.line_chart(data.set_index(x_axis)[y_axis])
+                    chart_data = data[[x_axis, y_axis]].dropna()
+                    st.line_chart(chart_data.set_index(x_axis)[y_axis])
                 elif chart_type == "Scatter Plot":
-                    # Scatter plot using Altair for better flexibility
-                    import altair as alt
-                    scatter = alt.Chart(data).mark_circle(size=60).encode(
-                        x=x_axis,
-                        y=y_axis,
+                    scatter = alt.Chart(data.dropna()).mark_circle(size=60).encode(
+                        x=alt.X(x_axis, title=x_axis),
+                        y=alt.Y(y_axis, title=y_axis),
                         tooltip=available_columns
                     ).interactive()
                     st.altair_chart(scatter, use_container_width=True)
