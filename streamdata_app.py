@@ -49,6 +49,10 @@ if st.sidebar.button("Fetch Data"):
             # Display the data as a table
             st.dataframe(data)
 
+            # Debugging: Show column names
+            st.write("Available Columns in Data:")
+            st.write(data.columns.tolist())
+
             # Visualization options
             st.header("Visualizations")
             available_columns = data.columns.tolist()
@@ -63,9 +67,36 @@ if st.sidebar.button("Fetch Data"):
                 "Select the Chart Type", ["Bar Chart", "Line Chart", "Scatter Plot"], key="chart_type"
             )
 
+            # Debugging: Display selected options
+            st.write("Selected Options:")
+            st.write(f"X-axis: {x_axis}, Y-axis: {y_axis}, Chart Type: {chart_type}")
+
             # Button to show the chart
             if st.button("Show Chart"):
-                # Render the selected chart type
-                if chart_type == "Bar Chart":
-                    chart_data = data[[x_axis, y_axis]].dropna()
-                    st.ba
+                try:
+                    # Render the selected chart type
+                    if chart_type == "Bar Chart":
+                        chart_data = data[[x_axis, y_axis]].dropna()
+                        st.write("Bar Chart Data:")
+                        st.write(chart_data)  # Debugging: Show the data being used
+                        st.bar_chart(chart_data.set_index(x_axis)[y_axis])
+                    elif chart_type == "Line Chart":
+                        chart_data = data[[x_axis, y_axis]].dropna()
+                        st.write("Line Chart Data:")
+                        st.write(chart_data)  # Debugging: Show the data being used
+                        st.line_chart(chart_data.set_index(x_axis)[y_axis])
+                    elif chart_type == "Scatter Plot":
+                        scatter = alt.Chart(data.dropna()).mark_circle(size=60).encode(
+                            x=alt.X(x_axis, title=x_axis),
+                            y=alt.Y(y_axis, title=y_axis),
+                            tooltip=available_columns
+                        ).interactive()
+                        st.write("Scatter Plot Data:")
+                        st.write(data.dropna())  # Debugging: Show the data being used
+                        st.altair_chart(scatter, use_container_width=True)
+                except Exception as e:
+                    st.error(f"Error creating the chart: {e}")
+        else:
+            st.warning("No data available.")
+    else:
+        st.warning("Please provide the Base URL, username, and password.")
