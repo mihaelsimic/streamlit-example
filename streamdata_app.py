@@ -53,9 +53,10 @@ if st.sidebar.button("Fetch Data"):
             st.header("Visualizations")
             available_columns = data.columns.tolist()
 
-            # Dropdowns for selecting fields
-            x_axis = st.selectbox("Select the X-axis", available_columns, key="x_axis")
-            y_axis = st.selectbox("Select the Y-axis", available_columns, key="y_axis")
+            # Default selection for X-axis and Y-axis
+            x_axis = st.selectbox("Select the X-axis", available_columns, index=0, key="x_axis")
+            y_axis_default_index = 1 if len(available_columns) > 1 else 0  # Default to the 2nd column if available
+            y_axis = st.selectbox("Select the Y-axis", available_columns, index=y_axis_default_index, key="y_axis")
 
             # Allow users to select the chart type
             chart_type = st.selectbox(
@@ -67,18 +68,4 @@ if st.sidebar.button("Fetch Data"):
                 # Render the selected chart type
                 if chart_type == "Bar Chart":
                     chart_data = data[[x_axis, y_axis]].dropna()
-                    st.bar_chart(chart_data.set_index(x_axis)[y_axis])
-                elif chart_type == "Line Chart":
-                    chart_data = data[[x_axis, y_axis]].dropna()
-                    st.line_chart(chart_data.set_index(x_axis)[y_axis])
-                elif chart_type == "Scatter Plot":
-                    scatter = alt.Chart(data.dropna()).mark_circle(size=60).encode(
-                        x=alt.X(x_axis, title=x_axis),
-                        y=alt.Y(y_axis, title=y_axis),
-                        tooltip=available_columns
-                    ).interactive()
-                    st.altair_chart(scatter, use_container_width=True)
-        else:
-            st.warning("No data available.")
-    else:
-        st.warning("Please provide the Base URL, username, and password.")
+                    st.ba
