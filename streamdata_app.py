@@ -49,53 +49,33 @@ if st.sidebar.button("Fetch Data"):
             # Display the data as a table
             st.dataframe(data)
 
-            # Debugging: Show column names
-            st.write("Available Columns in Data:")
-            st.write(data.columns.tolist())
-
             # Visualization options
             st.header("Visualizations")
             available_columns = data.columns.tolist()
 
-            # Default selection for X-axis and Y-axis
-            x_axis = st.selectbox("Select the X-axis", available_columns, index=0, key="x_axis")
+            # Dropdowns for selecting fields
+            x_axis = st.selectbox("Select the X-axis", available_columns, index=0)
             y_axis_default_index = 1 if len(available_columns) > 1 else 0  # Default to the 2nd column if available
-            y_axis = st.selectbox("Select the Y-axis", available_columns, index=y_axis_default_index, key="y_axis")
+            y_axis = st.selectbox("Select the Y-axis", available_columns, index=y_axis_default_index)
 
-            # Allow users to select the chart type
-            chart_type = st.selectbox(
-                "Select the Chart Type", ["Bar Chart", "Line Chart", "Scatter Plot"], key="chart_type"
-            )
+            # Bar Chart
+            st.subheader("Bar Chart")
+            bar_chart_data = data[[x_axis, y_axis]].dropna()
+            st.bar_chart(bar_chart_data.set_index(x_axis)[y_axis])
 
-            # Debugging: Display selected options
-            st.write("Selected Options:")
-            st.write(f"X-axis: {x_axis}, Y-axis: {y_axis}, Chart Type: {chart_type}")
+            # Line Chart
+            st.subheader("Line Chart")
+            line_chart_data = data[[x_axis, y_axis]].dropna()
+            st.line_chart(line_chart_data.set_index(x_axis)[y_axis])
 
-            # Button to show the chart
-            if st.button("Show Chart"):
-                try:
-                    # Render the selected chart type
-                    if chart_type == "Bar Chart":
-                        chart_data = data[[x_axis, y_axis]].dropna()
-                        st.write("Bar Chart Data:")
-                        st.write(chart_data)  # Debugging: Show the data being used
-                        st.bar_chart(chart_data.set_index(x_axis)[y_axis])
-                    elif chart_type == "Line Chart":
-                        chart_data = data[[x_axis, y_axis]].dropna()
-                        st.write("Line Chart Data:")
-                        st.write(chart_data)  # Debugging: Show the data being used
-                        st.line_chart(chart_data.set_index(x_axis)[y_axis])
-                    elif chart_type == "Scatter Plot":
-                        scatter = alt.Chart(data.dropna()).mark_circle(size=60).encode(
-                            x=alt.X(x_axis, title=x_axis),
-                            y=alt.Y(y_axis, title=y_axis),
-                            tooltip=available_columns
-                        ).interactive()
-                        st.write("Scatter Plot Data:")
-                        st.write(data.dropna())  # Debugging: Show the data being used
-                        st.altair_chart(scatter, use_container_width=True)
-                except Exception as e:
-                    st.error(f"Error creating the chart: {e}")
+            # Scatter Plot
+            st.subheader("Scatter Plot")
+            scatter = alt.Chart(data.dropna()).mark_circle(size=60).encode(
+                x=alt.X(x_axis, title=x_axis),
+                y=alt.Y(y_axis, title=y_axis),
+                tooltip=available_columns
+            ).interactive()
+            st.altair_chart(scatter, use_container_width=True)
         else:
             st.warning("No data available.")
     else:
